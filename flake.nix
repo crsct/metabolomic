@@ -9,11 +9,7 @@
     in {
       devShells.default = pkgs.mkShell {
         nativeBuildInputs = [ pkgs.bashInteractive ];
-        buildInputs = with pkgs; [ 
-          R 
-          rPackages.pagedown 
-          chromium 
-          pandoc ];
+        buildInputs = with pkgs; [ R rPackages.pagedown chromium pandoc ];
        };
     });
 }
