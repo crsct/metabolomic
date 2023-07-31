@@ -88,7 +88,7 @@
           '';
           installPhase = ''
             mkdir -p $out
-            cp project.pdf $out/
+            cp project.pdf ./
           '';
         };
       };
