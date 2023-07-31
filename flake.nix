@@ -52,7 +52,7 @@
     in rec {
       packages = {
         document = pkgs.stdenvNoCC.mkDerivation rec {
-          name = "thesis";
+          name = "metabolomic";
           src = self;
           buildInputs = [
             # Add packages below
