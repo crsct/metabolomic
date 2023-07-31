@@ -7,20 +7,15 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
-
+  tests:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Install Nix
-      run: curl -L https://nixos.org/nix/install | sh
-      env:
-        NIX_PATH: nixpkgs=https://github.com/NixOS/nixpkgs-channels/archive/nixpkgs-unstable.tar.gz
-    
-    - name: Setup Nix
-      run: . /home/runner/.nix-profile/etc/profile.d/nix.sh
-
-    - name: Activate Nix flakes
-      run: nix build
+      - uses: actions/checkout@v3
+      - name: Install Nix
+        uses: cachix/install-nix-action@v18
+        with:
+          extra_nix_config: |
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+      - uses: workflow/nix-shell-action@v3
+        with:
+          flakes: .
