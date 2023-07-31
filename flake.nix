@@ -7,9 +7,21 @@
     flake-utils.lib.eachDefaultSystem (system: let
       pkgs = nixpkgs.legacyPackages.${system};
     in {
-      devShells.default = pkgs.mkShell {
+      devShell = pkgs.mkShell {
         nativeBuildInputs = [ pkgs.bashInteractive ];
-        buildInputs = with pkgs; [ R rPackages.pagedown chromium pandoc ];
-       };
+        buildInputs = with pkgs; [ 
+          R 
+          rPackages.pagedown 
+          rPackages.knitr 
+          chromium 
+          pandoc
+          texlive.combined.scheme-full
+          ];
+        phases = ["unpackPhase" "buildPhase" "installPhase"];
+        buildPhase = ''
+          make
+        '';
+      };
     });
 }
+
