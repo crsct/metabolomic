@@ -18,6 +18,9 @@ jobs:
       run: curl -L https://nixos.org/nix/install | sh
       env:
         NIX_PATH: nixpkgs=https://github.com/NixOS/nixpkgs-channels/archive/nixpkgs-unstable.tar.gz
+    
+    - name: Setup Nix
+      run: . /home/runner/.nix-profile/etc/profile.d/nix.sh
 
     - name: Activate Nix flakes
       run: nix build
