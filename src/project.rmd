@@ -1,5 +1,18 @@
 ---
-
+output: pdf_document
 ---
 
-# This is a test
+## Import packages
+
+```{r}
+library(readxl)
+```
+
+## Initialization with data
+
+```{r}
+setwd('../Input')
+
+data <- readxl("Datenbank_Steroide_gruppiert_230421.xlsx", skip = 1, sheet = "Steroids", col_names = TRUE)
+
+```

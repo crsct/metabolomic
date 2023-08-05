@@ -73,6 +73,7 @@
             pkgs.rPackages.ggplot2
             pkgs.rPackages.tidyverse
             pkgs.rPackages.tikzDevice
+            pkgs.rPackages.readxl
             tex
           ];
           phases = ["unpackPhase" "buildPhase" "installPhase"];
@@ -88,7 +89,7 @@
           '';
           installPhase = ''
             mkdir -p $out
-            cp project.pdf ./
+            cp project.pdf $out
           '';
         };
       };
