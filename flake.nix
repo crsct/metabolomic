@@ -10,45 +10,21 @@
     with flake-utils.lib; eachSystem allSystems (system:
     let
       pkgs = nixpkgs.legacyPackages.${system};
-      tex = pkgs.texlive.combine {
-        inherit (pkgs.texlive)
-        scheme-basic
-        latex-bin
-        latexmk
+      # tex = pkgs.texlive.combine {
+      #   inherit (pkgs.texlive)
+      #   scheme-basic
+      #   latex-bin
+      #   latexmk
 
-        # Add tex packages below
-        biber
-        biblatex
-        booktabs
-        caption
-        cleveref
-        courier
-        ec
-        enumitem
-        environ
-        etoolbox
-        fancyvrb
-        float
-        fontaxes
-        footnotehyper
-        graphics
-        ifoddpage
-        import
-        inter
-        koma-script
-        listings
-        mathtools
-        multirow
-        ms
-        pgf
-        preview
-        relsize
-        subfig
-        transparent
-        xkeyval
-        xpatch
-        xstring;
-      };
+      #   # Add tex packages below
+      #   caption
+      #   cleveref
+      #   courier
+      #   ec
+      #   enumitem
+      #   environ
+      #   xstring;
+      # };
     in rec {
       packages = {
         document = pkgs.stdenvNoCC.mkDerivation rec {
@@ -74,7 +50,7 @@
             pkgs.rPackages.tidyverse
             pkgs.rPackages.tikzDevice
             pkgs.rPackages.readxl
-            tex
+            # tex
           ];
           phases = ["unpackPhase" "buildPhase" "installPhase"];
           buildPhase = ''
