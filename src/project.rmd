@@ -12,9 +12,58 @@ library(readxl)
 ## Initialization with data
 
 ```{r}
+# Read the data from the excel sheet
 data <- read_excel(
     "../Input/Datenbank_Steroide_gruppiert_230421.xlsx",
     skip = 1, sheet = "Steroids", col_names = TRUE)
 
-data
+```
+
+### Removing non applicable data points
+```{r}
+
+# Function to Remove all 'NA' from the data
+replacezero <- function(x) "[<-"(x, !x | is.na(x), min(x[x > 0],na.rm = TRUE) / 2)
+
+# apply the function to our data, renaming it to 'dat2' in the process
+dat2 <- as.data.frame(t(apply(data, 1, replacezero)))
+```
+
+## Transform data to logarithmic with base 2
+
+```{r}
+logdata <- log(dat2, 2)
+
+# Function for pareto scaling
+paretoscale <- function(z) {
+  rowmean <- apply(z, 1, mean) # row means
+  rowsd <- apply(z, 1, sd)  # row standard deviation
+  rowsqrtsd <- sqrt(rowsd) # sqrt of sd
+  rv <- sweep(z, 1, rowmean,"-")  # mean center
+  rv <- sweep(rv, 1, rowsqrtsd, "/")  # dividing by sqrtsd
+  return(rv)
+}
+
+# Pareto scale log transformed data
+logdata.pareto <- paretoscale(logdata)
+```
+
+## Principal Component analysis
+
+```{r}
+pca <- prcomp(t(logdata.pareto), center=F, scale=F)
+
+# Display
+
+plot(pca)
+biplot(pca)
+
+# Make a simple scores plot
+plot(pca$x[,1], pca$x[,2], type='p', cex=0, pch=20, main="Scores Plot", xlab="PC1", ylab="PC2")
+text(pca$x[,1], pca$x[,2], labels=rownames(pca$x), cex=1.0)
+abline(h=0, v=0, col="red")
+
+# Make a simple loadings plot (variance among variables)
+plot(pca$rotation[,1], pca$rotation[,2], type='p', cex=0.5, pch=20,main="Loadings Plot", xlab="PC1", ylab="PC2")
+abline(h=0, v=0, col="red")
 ```
