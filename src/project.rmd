@@ -1,5 +1,6 @@
 ---
 output: pdf_document
+title: Metabolomic - Paper
 ---
 
 ## Import packages
@@ -11,8 +12,9 @@ library(readxl)
 ## Initialization with data
 
 ```{r}
-setwd('../Input')
+data <- read_excel(
+    "../Input/Datenbank_Steroide_gruppiert_230421.xlsx",
+    skip = 1, sheet = "Steroids", col_names = TRUE)
 
-data <- readxl("Datenbank_Steroide_gruppiert_230421.xlsx", skip = 1, sheet = "Steroids", col_names = TRUE)
-
+data
 ```

@@ -85,11 +85,12 @@
             mkdir -p .cache/texmf-var
             mkdir -p .config/inkscape
             env TEXMFHOME=.cache TEXMFVAR=.cache/texmf-var \
-              make project.pdf
+              # make project.pdf
+              Rscript src/script.R
           '';
           installPhase = ''
             mkdir -p $out
-            cp project.pdf $out
+            cp src/project.html $out
           '';
         };
       };
