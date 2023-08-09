@@ -1,0 +1,3 @@
+[submodule "Input/metabolomics-in-r"]
+	path = Input/metabolomics-in-r
+	url = git@github.com:ualr-Rgroup/metabolomics-in-r.git
