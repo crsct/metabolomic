@@ -1,23 +1,26 @@
 ---
-output: pdf_document
-title: Metabolomic - Paper
+output: html_document
+title: metabolomic - paper
 ---
 
-## Import packages
+## Initialization with data
+### Read the data from the excel sheet
 
 ```{r}
 library(readxl)
-```
-
-## Initialization with data
-
-```{r}
-# Read the data from the excel sheet
 data <- read_excel(
     "../Input/Datenbank_Steroide_gruppiert_230421.xlsx",
     skip = 1, sheet = "Steroids", col_names = TRUE)
-
 ```
+
+```{r}
+library(dplyr)
+
+dat1 <- data.frame(data, row.names = data$"Pat.-Nr.")
+datAll <- dat1 %>% select(-1)
+dat1 <- datAll %>% select(-1)
+
+``` 
 
 ### Removing non applicable data points
 ```{r}
@@ -26,7 +29,9 @@ data <- read_excel(
 replacezero <- function(x) "[<-"(x, !x | is.na(x), min(x[x > 0],na.rm = TRUE) / 2)
 
 # apply the function to our data, renaming it to 'dat2' in the process
-dat2 <- as.data.frame(t(apply(data, 1, replacezero)))
+dat2 <- as.data.frame(t(apply(dat1, 1, replacezero)))
+
+str(dat2)
 ```
 
 ## Transform data to logarithmic with base 2
@@ -66,4 +71,62 @@ abline(h=0, v=0, col="red")
 # Make a simple loadings plot (variance among variables)
 plot(pca$rotation[,1], pca$rotation[,2], type='p', cex=0.5, pch=20,main="Loadings Plot", xlab="PC1", ylab="PC2")
 abline(h=0, v=0, col="red")
+```
+
+```{r}
+# Create a container called "results" for PCA results
+results <- summary(pca)
+
+names(results)
+
+# Make a simple scores plot
+plot(pca$x[,1], pca$x[,2], type='p', cex=0, pch=20, main="Scores Plot", xlab="PC1", ylab="PC2")
+text(pca$x[,1], pca$x[,2], labels=rownames(pca$x), cex=1.0)
+abline(h=0, v=0, col="red")
+
+# Make a simple loadings plot (variance among variables)
+plot(pca$rotation[,1], pca$rotation[,2], type='p', cex=0.5, pch=20,main="Loadings Plot", xlab="PC1", ylab="PC2")
+abline(h=0, v=0, col="red")
+
+
+# Extract PCA results into data frames
+
+scree.data <- as.data.frame(results$importance)
+score.data <- as.data.frame(results$x)
+loadings.data <- as.data.frame(results$rotation)
+
+plot(loadings.data$PC1, loadings.data$PC2)
+abline(v=0.09, col="red")
+abline(v=-0.09, col="red")
+abline(h=0.09, col="red")
+abline(h=-0.09, col="red")
+
+
+
+# Make a new data frame with PC1, PC2, and PC3 loadings
+loadings.PC1.PC2 <- loadings.data[,1:3]
+loadings.PC1.PC2[1:6,1:3]  # look at the first few rows
+
+# subset significant loadings
+loadings.sig <- subset(loadings.PC1.PC2,
+                       PC1 > 0.09 | PC1 < -0.09 |
+                         PC2 > 0.09 | PC2 < -0.09)
+
+# sanity check - plot the results
+plot(loadings.sig$PC1, loadings.sig$PC2)
+```
+
+```{r}
+####################################################
+# Heatmaps
+####################################################
+
+library(gplots)
+heatmap.2(as.matrix(logdata.pareto))
+
+```
+
+```{r}
+boxplot(logdata.pareto)
+
 ```
