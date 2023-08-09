@@ -1,23 +1,26 @@
 ---
 output: html_document
-title: Metabolomic - Paper
+title: metabolomic - paper
 ---
 
-## Import packages
+## Initialization with data
+### Read the data from the excel sheet
 
 ```{r}
 library(readxl)
-```
-
-## Initialization with data
-
-```{r}
-# Read the data from the excel sheet
 data <- read_excel(
     "../Input/Datenbank_Steroide_gruppiert_230421.xlsx",
     skip = 1, sheet = "Steroids", col_names = TRUE)
-
 ```
+
+```{r}
+library(dplyr)
+
+dat1 <- data.frame(data, row.names = data$"Pat.-Nr.")
+datAll <- dat1 %>% select(-1)
+dat1 <- datAll %>% select(-1)
+
+``` 
 
 ### Removing non applicable data points
 ```{r}
@@ -26,7 +29,7 @@ data <- read_excel(
 replacezero <- function(x) "[<-"(x, !x | is.na(x), min(x[x > 0],na.rm = TRUE) / 2)
 
 # apply the function to our data, renaming it to 'dat2' in the process
-dat2 <- as.data.frame(t(apply(data, 1, replacezero)))
+dat2 <- as.data.frame(t(apply(dat1, 1, replacezero)))
 
 str(dat2)
 ```
@@ -121,116 +124,9 @@ plot(loadings.sig$PC1, loadings.sig$PC2)
 library(gplots)
 heatmap.2(as.matrix(logdata.pareto))
 
-
-####################################################
-# Boxplots
-####################################################
-
-colnames(logdata.pareto)
-# boxplot(logdata.pareto$HG1)
-dat3<-t(logdata.pareto)
-rownames(dat3)
-colnames(dat3)
-nrow(dat3)
-
-boxplot(dat3[,"495.2/2285"])
-
-# Create "Group" vector
-Group <- c(rep("hp-2dg Green", 8),
-           rep("Manapal Green", 10),
-           rep("hp-2dg Red", 10),
-           rep("Manapal Red", 10))
-
-boxplot(dat3[,"495.2/2285"]~Group)
-
-
-par(mfrow=c(2,2))
-boxplot(dat3[,"495.2/2285"]~Group,main="495.2/2285")
-boxplot(dat3[,"529.8/992"]~Group,main="529.8/992")
-boxplot(dat3[,"805.2/2198"]~Group,main="805.2/2198")
-boxplot(dat3[,"1136.4/2038"]~Group,main="1136.4/2038")
-par(mfrow=c(1,1))
 ```
 
 ```{r}
-####################################################
-# Volcano plots
-####################################################
+boxplot(logdata.pareto)
 
-# was ist apply?
-apply(dat3,1,sum)
-apply(dat3,1,function (x) mean(x)/sd(x))
-
-
-# Wie liegen die Daten vor?
-dat3[1:18,1]
-Group
-Group[1:18]
-
-# t.test f�r die erste Spalte und die ersten beiden Gruppen
-boxplot(dat3[1:18,1]~Group[1:18])
-t.test(dat3[1:18,1]~Group[1:18])
-
-# Ergebnis in ein Objekt schreiben
-test<-t.test(dat3[1:18,1]~Group[1:18])
-
-# Auf das Ergebnis zugreifen
-names(test)
-test$p.value
-test$estimate
-test$estimate[1]
-test$estimate[2]
-test$estimate[1]-test$estimate[2]
-# Fold change
-test$estimate[1]/test$estimate[2]
-# log2 Fold change
--log2(abs(test$estimate[1]/test$estimate[2]))
-
-######################################################
-# F�r alle Metabolite
-######################################################
-
-# Sum normalization function - apply to each column
-sumnorm <- function(z) {
-  colsum <- apply(z, 2, sum)
-  rv <- sweep(z, 2, colsum, "/")
-  return(rv)
-}
-
-# Sum normalize data
-set1.norm <- sumnorm(dat2)
-
-# Log transform data
-logd1.norm = log2(set1.norm)
-
-# Perform t-test to get p-values 
-pvalue <- apply(logd1.norm, 1, function(x) { t.test(x[1:8], x[9:18])$p.value } )
-
-# Apply Benjamini-Hochberg correction (FDR)
-p.BHcorr <- p.adjust(pvalue, method = "BH")
-
-# Calculate negative log of FDR-adjusted p value
-p.BH.nlog <- -log10(p.BHcorr)
-
-# Calculate row-wise group means for sum normalized data
-hp <- apply(set1.norm[1:8], 1, FUN=mean)
-Man <- apply(set1.norm[9:18], 1, FUN=mean)
-
-# Calculate log2 Fold Change from group means
-FC <- hp/Man
-log2FC <- log(FC,2)
-
-# Make new data frame with volcano plot data
-volcano.dat1 <- data.frame(hp, Man, pvalue, p.BHcorr, p.BH.nlog, FC, log2FC)
-
-# Sort in ascending order by FDR
-volcano.dat1 <- volcano.dat1[order(p.BHcorr), ]
-
-# make a simple volcano plot
-plot(volcano.dat1$log2FC, volcano.dat1$p.BH.nlog)
-
-# add cutoff lines to show significant variables
-abline(v = 2, col = "red")
-abline(v = -2, col = "red")
-abline(h = 2, col = "red")
 ```
