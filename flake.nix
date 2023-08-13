@@ -50,6 +50,7 @@
             pkgs.rPackages.tidyverse
             pkgs.rPackages.tikzDevice
             pkgs.rPackages.gplots
+            pkgs.rPackages.FactoMineR
             pkgs.rPackages.readxl
             # tex
           ];
