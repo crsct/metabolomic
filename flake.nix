@@ -49,6 +49,7 @@
             pkgs.rPackages.ggplot2
             pkgs.rPackages.tidyverse
             pkgs.rPackages.tikzDevice
+            pkgs.rPackages.gplots
             pkgs.rPackages.readxl
             # tex
           ];
