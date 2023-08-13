@@ -34,29 +34,60 @@ dat2 <- as.data.frame(t(apply(dat1, 1, replacezero)))
 str(dat2)
 ```
 
-## Transform data to logarithmic with base 2
+## Normalizing Data calculate correlation
 
 ```{r}
-logdata <- log(dat2, 2)
+normalized <- scale(dat2)
 
-# Function for pareto scaling
-paretoscale <- function(z) {
-  rowmean <- apply(z, 1, mean) # row means
-  rowsd <- apply(z, 1, sd)  # row standard deviation
-  rowsqrtsd <- sqrt(rowsd) # sqrt of sd
-  rv <- sweep(z, 1, rowmean,"-")  # mean center
-  rv <- sweep(rv, 1, rowsqrtsd, "/")  # dividing by sqrtsd
-  return(rv)
-}
+corr_matrix <- cor(normalized)
 
-# Pareto scale log transformed data
-logdata.pareto <- paretoscale(logdata)
+# ggcorrplot(corr_matrix)
+
+
+pca <- prcomp(t(corr_matrix), center=F, scale=F)
+
+# Display
+
+plot(pca)
+biplot(pca)
+
+zeroval <- apply(normalized,1,function(x)sum(x == 0))
+head(normalized)
+head(corr_matrix)
+
+data.pca <- princomp(corr_matrix)
+summary(data.pca)
+
+plot(pca)
+biplot(pca)
+
+
 ```
+
+# ## Transform data to logarithmic with base 
+
+# ```{r}
+# # logdata <- log(dat2, 2)
+# logdata <- log(normalized)
+
+# # Function for pareto scaling
+# paretoscale <- function(z) {
+#   rowmean <- apply(z, 1, mean) # row means
+#   rowsd <- apply(z, 1, sd)  # row standard deviation
+#   rowsqrtsd <- sqrt(rowsd) # sqrt of sd
+#   rv <- sweep(z, 1, rowmean,"-")  # mean center
+#   rv <- sweep(rv, 1, rowsqrtsd, "/")  # dividing by sqrtsd
+#   return(rv)
+# }
+
+# # Pareto scale log transformed data
+# logdata.pareto <- paretoscale(logdata)
+# ```
 
 ## Principal Component analysis
 
 ```{r}
-pca <- prcomp(t(logdata.pareto), center=F, scale=F)
+pca <- prcomp(t(normalized), center=F, scale=F)
 
 # Display
 
@@ -122,11 +153,14 @@ plot(loadings.sig$PC1, loadings.sig$PC2)
 ####################################################
 
 library(gplots)
-heatmap.2(as.matrix(logdata.pareto))
+heatmap.2(as.matrix(corr_matrix))
+# ```
 
-```
-
-```{r}
-boxplot(logdata.pareto)
+# ```{r}
+# boxplot(logdata.pareto)
+# dat3 <- t(logdata.pareto)
+# rownames(dat3)
+# colnames(dat3)
+# nrow(dat3)
 
 ```
