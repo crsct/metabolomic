@@ -53,6 +53,15 @@ paretoscale <- function(z) {
 logdata.pareto <- paretoscale(logdata)
 ```
 
+
+```{r}
+head(logdata.pareto)
+head(logdata)
+
+boxplot(logdata)
+boxplot(logdata.pareto)
+```
+
 ## Principal Component analysis
 
 ```{r}
@@ -96,10 +105,11 @@ score.data <- as.data.frame(results$x)
 loadings.data <- as.data.frame(results$rotation)
 
 plot(loadings.data$PC1, loadings.data$PC2)
-abline(v=0.09, col="red")
-abline(v=-0.09, col="red")
-abline(h=0.09, col="red")
-abline(h=-0.09, col="red")
+pvalue <- 0.05
+abline(v=pvalue, col="red")
+abline(v=-pvalue, col="red")
+abline(h=pvalue, col="red")
+abline(h=-pvalue, col="red")
 
 
 
@@ -109,8 +119,8 @@ loadings.PC1.PC2[1:6,1:3]  # look at the first few rows
 
 # subset significant loadings
 loadings.sig <- subset(loadings.PC1.PC2,
-                       PC1 > 0.09 | PC1 < -0.09 |
-                         PC2 > 0.09 | PC2 < -0.09)
+                       PC1 > pvalue | PC1 < -pvalue |
+                         PC2 > pvalue | PC2 < -pvalue)
 
 # sanity check - plot the results
 plot(loadings.sig$PC1, loadings.sig$PC2)
@@ -129,4 +139,32 @@ heatmap.2(as.matrix(logdata.pareto))
 ```{r}
 boxplot(logdata.pareto)
 
+```
+
+
+```{r}
+library(ggfortify)
+autoplot(pca,loadings = TRUE,loadings.label = TRUE)
+
+#### Exkurs ins andere R-Skript
+# Cluster: Partitioning Around Medoids (a more robust version of K-means)
+
+library(cluster)# Heatmaps + Cluster Analysis
+library(pheatmap)
+pheatmap(logdata,scale = "none", cluster_rows = T, cluster_cols = T)
+pheatmap(logdata.pareto,scale = "none", cluster_rows = T, cluster_cols = T)
+
+
+#### try to fix the pam clara thing 
+#### funktioniert ist aber nicht schön:
+
+# colnames(logdata.pareto) = paste("Metabolit_", 1:32, sep = "")
+
+#### 
+library(ggplot2)
+clara.result <- (clara(logdata.pareto, 5))
+
+autoplot(clara.result, frame = TRUE, frame.type = "norm", loadings = TRUE,loadings.label = FALSE)
+
+head(clara.result)
 ```

@@ -51,7 +51,10 @@
             pkgs.rPackages.tikzDevice
             pkgs.rPackages.gplots
             pkgs.rPackages.FactoMineR
+            pkgs.rPackages.ggfortify
+            pkgs.rPackages.cluster
             pkgs.rPackages.readxl
+            pkgs.rPackages.pheatmap
             # tex
           ];
           phases = ["unpackPhase" "buildPhase" "installPhase"];
