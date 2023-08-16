@@ -1,0 +1,333 @@
+```{r}
+getwd()
+```
+```{r}
+# Datei einlesen
+library(tidyverse)
+library(readxl)
+# Read the data and specify NA values
+dta <- read_xlsx("Input/Datenbank_Steroide_gruppiert_230421.xlsx", skip = 1, sheet = "Steroids", col_names = TRUE)
+str(dta)
+dta$Sex <- as.factor(dta$Sex)
+as.factor(dta$Sex)
+## Alle Werte sind numerisch. In den Boxplots merkt man jedoch Unterschiede in der Höhe der Mediane, whiskers, skewness etc.
+## Man beobachtet eine rechte Verzerrung (Skewness) und einen höheren Range und IQR (interquantil range) –> Median < Mean.
+## THE hat dabei den größten Range.
+boxplot(dta[, -(1:2)])
+# a-THB weißt extreme Ausreißer auf
+
+# Teile die Grafik in ein 4x4 Raster auf
+# Setze das Grafikgerät zurück
+# dev.off()
+
+# Größe und Ränder der Grafik anpassen
+par(mfrow = c(4, 4))
+par(mar = c(2, 2, 1, 1))  # Ändere die Randparameter
+
+# Schleife über alle Variablen (Spalten), beginnend ab der 3. Spalte
+for (i in 3:ncol(dta)) {
+  # Lade Daten für die aktuelle Variable
+  hist_data <- dta[[i]]
+  
+  # Überprüfe auf NA-Werte
+  if (any(is.na(hist_data))) {
+    # Erstelle Histogramm für die aktuelle Variable mit NA-Werten
+    hist(hist_data, main = colnames(dta)[i], xlab = "", col = "lightblue", border = "white", prob = TRUE)
+  } else {
+    # Berechne Dichtewerte für das Histogramm
+    density_values <- density(hist_data)
+    # Passe die x-Achse an
+    xlim <- c(min(hist_data) - 0.1 * diff(range(hist_data)),
+              max(hist_data) + 0.1 * diff(range(hist_data)))
+    # Erstelle Histogramm für die aktuelle Variable mit Dichtekurve, spezifischen Breaks und benutzerdefinierter Farbskala
+    col <- c('grey', "#8DD3C7", "#FFFFB3", "#BEBADA", "#FB8072")
+    hist(hist_data, breaks = 30, main = colnames(dta)[i], xlab = "", col = col, border = "white", xlim = xlim, prob = TRUE, ylim = c(0, max(density_values$y)))
+    # Zeichne die Dichtekurve
+    lines(density_values, col = "red", lwd = 2)
+  }
+}
+
+
+# Definition der Funktion sumstats, um deskriptive Statistiken zu berechnen
+sumstats <- function(z) {
+  # Die ersten beiden Spalten (Patienten-ID und Geschlecht) von den Berechnungen ausschließen
+  z_subset <- z[, -c(1, 2)]
+  # Berechne den Mittelwert für jede Spalte (Variable)
+  Mean <- apply(z_subset, 2, mean)
+   # Berechne den Median für jede Spalte (Variable)
+  Median <- apply(z_subset, 2, median)
+  # Berechne die Standardabweichung für jede Spalte (Variable)
+  SD <- apply(z_subset, 2, sd)
+  # Berechne den Standardfehler für jede Spalte (Variable)
+  SE <- apply(z_subset, 2, function(x) sd(x)/sqrt(length(x)))
+  # Berechne den Variationskoeffizienten für jede Spalte (Variable)
+  CV <- apply(z_subset, 2, function(x) sd(x)/mean(x))
+   # Erstelle ein neues Datenobjekt mit den berechneten Statistiken
+  result <- data.frame(Mean, Median, SD, SE, CV)
+  return(result)
+}
+
+descstat<-sumstats(dta)
+head(descstat)
+# Round the numeric values in descstat to 3 decimal places
+descstat_rounded <- round(descstat, digits = 3)
+head(descstat_rounded)
+####
+#Datenenpreprozessierung: Zuerst schauen wir ob wir im Datensatz fehlende Werte haben
+
+# Hier wird die Anzahl der fehlenden Peaks pro Zeile gezählt bei dta1 (Ohne Patient-ID und Sex), wobei ein fehlender Peak den Wert 0 hat.
+# Es wird angenommen, dass fehlende Werte als 0 dargestellt werden.
+zeroval <- apply(dta, 1, function(x)sum(x == 0))
+zeroval
+# Anzahl der Zeilen mit mindestens einem fehlenden Peak
+# Hier werden Zeilen gezählt, die mindestens einen fehlenden Peak (Wert == 0) haben.
+# Es wird angenommen, dass fehlende Werte als 0 dargestellt werden.
+length(which(zeroval > 0))
+
+# Anzahl der Zeilen mit mindestens 10 fehlenden Peaks
+# Hier werden Zeilen gezählt, die mindestens 10 fehlende Peaks (Wert == 0) haben.
+# Es wird angenommen, dass fehlende Werte als 0 dargestellt werden.
+length(which(zeroval >= 10))
+
+# Anzahl der Nullwerte in der Peak-Tabelle
+# Hier wird die Gesamtanzahl der Nullwerte (fehlende Peaks) in der gesamten Tabelle berechnet.
+# Falls fehlende Werte als NA im Datensatz vorliegen, kann das Argument na.rm = TRUE verwendet werden.
+sum(zeroval, na.rm = TRUE)
+
+# Anteil fehlender Werte in der Datenmatrix
+# Hier wird der Anteil der fehlenden Werte (Nullwerte) in der gesamten Datenmatrix berechnet.
+# Der Wert wird auf 4 Nachkommastellen gerundet.
+# Falls fehlende Werte als NA im Datensatz vorliegen, kann das Argument na.rm = TRUE verwendet werden.
+round(sum(zeroval, na.rm = TRUE) / (nrow(dta) * ncol(dta)), 3)
+```
+
+```{r}
+sum(is.na(dta))
+```
+
+```{r}
+#############
+#3.1 Imputation der fehlenden Werte mit einem kleinen Wert (Widely used approach)
+# Finde den kleinsten von Null verschiedenen Wert in einer Reihe von Zahlen und teile diesen Wert dann durch 2.
+replacezero <- function(x) "[<-"(x, !x | is.na(x), min(x[x > 0],na.rm = TRUE) / 2)
+dta2 <- as.data.frame(t(apply(dta, 1, replacezero)))
+```
+
+```{r}
+length(which(dta2 > 0))
+```
+
+```{r}
+# # Apply function across rows -> um die fehlenden Werte in jeder Zeile der Matrix durch diesen Wert zu ersetzen.
+# dta2 <- as.data.frame(t(apply(dta[, -which(names(dta) == "Sex")], 1, replacezero)))
+# Add the "Sex" column back to the dta2 data frame
+# dta2$Sex <- dta$Sex
+
+# Apply function across rows -> um die fehlenden Werte in jeder Zeile der Matrix durch diesen Wert zu ersetzen.
+dta2[351:353,4:8]  # previously observed zero values
+#0.7%Fehlende Werte (bei den Variablen in dta1 ohne Patient-ID und Geschlecht)
+
+#Wir beobachten, dass die fehlenden Werte wurden mit niedrige Zahlen (2.905, 2,715)  ersetzt. 
+#Fehlende Werte werden durch einen kleinen Wert ersetzt werden. 
+#Dadurch wird angenommen, dass die fehlenden Werte wahrscheinlich niedrige Konzentrationen darstellen, die unterhalb der (Limit of Detection) des verwendeten Messverfahrens liegen.
+
+#### Log transform the data (base 2 log)
+# List of columns to exclude from log transformation
+columns_to_exclude <- c("Sex", "Pat.-Nr.", "Alter [Jahre]")
+# Apply log transformation to all columns and then replace excluded columns with original values
+logdata <- log(dta2, 2)
+logdata[, columns_to_exclude] <- dta2[, columns_to_exclude]
+
+#par(mfrow = c(1, 1))
+boxplot(logdata[, !(names(logdata) %in% c("Alter", "Pat.-Nr.", "Sex") )])
+
+#Skewness bezieht sich auf die Asymmetrie der Verteilung um den Mittelwert. Die Varianz ist ein Maß dafür, wie weit die einzelnen Datenpunkte um den (Mittelwert) verteilt sind.
+#Unsere Daten weisen ursprünglich eine rechtsschiefe Verteilung und eine breite Streuung um den Mittelwert auf. Nach der Log2 Trnasformation wird diese Streuung reduziert. Grund: Log2-Transformation komprimiert große Werte und dehnt kleine Werte aus. Dadurch werden die Datenpunkte "zusammengedrückt", was die Varianz verringert und die Verteilung der Daten näher an eine normale Verteilung bringt. Dadurch erfolgt für die meisten Variablen eine Annäherung an eine nahezu normale Verteilung, mit einigen Ausnahmen.
+#Extreme Ausreißer beeinflussen das Ergebniss vor der Transformation stärker als nach der Transformation. Das reduziert die Auswirkungen von Extremwerten wie bei a-THB.
+
+#library(pheatmap)
+#scale = "none" means no scaling will be applied, and the heatmap will show the raw values of the log-transformed data.
+#cluster_rows = F: no clustering of the rows (genes) of the heatmap.
+#cluster_cols = F: not clustering of the columns (samples) of the heatmap
+k <- pheatmap(logdata[, -1] ,scale = "none", cluster_rows = F, cluster_cols = F)
+logdata <- cbind(logdata, dta[, c("Pat.-Nr.", "Sex")])
+#This will add the columns "Patient-Nr.", "Anx2", and "Sex" from dta to the right of logdata, and the resulting combined dataframe will be stored in the variable logdata.
+
+############################################
+# 4.3. Normalization and scaling
+############################################
+# Function for pareto scaling
+paretoscale <- function(z) {
+  rowmean <- apply(z, 1, mean) # row means
+  rowsd <- apply(z, 1, sd)  # row standard deviation
+  rowsqrtsd <- sqrt(rowsd) # sqrt of sd
+  rv <- sweep(z, 1, rowmean,"-")  # mean center
+  rv <- sweep(rv, 1, rowsqrtsd, "/")  # dividing by sqrtsd
+  return(rv)
+}
+# Pareto scale log transformed data
+# Select columns to include in paretoscale (excluding "Pat.-Nr.", "Alter [Jahre]", "Sex")
+selected_columns <- logdata[, !(names(logdata) %in% c("Pat.-Nr.", "Alter [Jahre]", "Sex"))]
+# Apply paretoscale to selected columns
+logdata.pareto <- paretoscale(selected_columns)
+boxplot(logdata.pareto)
+
+##############################################
+# 5. Principal component analysis
+##############################################
+# Run PCA (note use of "t" to transpose matrix)
+pca <- prcomp(t(logdata.pareto), center=F, scale=F)
+# wenn mans einfach macht
+plot(pca)
+# Labeling PCA plot with Patient IDs
+text(pca$x[, 1], pca$x[, 2], labels = logdata$`Pat.-Nr.`, pos = 3, col = "blue")
+biplot(pca)
+# Create a container called "results" for PCA results
+results <- summary(pca)
+names(results)
+# Make a simple scores plot
+plot(pca$x[,1], pca$x[,2], type='p', cex=0, pch=20, main="Scores Plot", xlab="PC1", ylab="PC2")
+text(pca$x[,1], pca$x[,2], labels=rownames(pca$x), cex=1.0)
+abline(h=0, v=0, col="red")
+
+# Make a simple loadings plot (variance among variables)
+plot(pca$rotation[,1], pca$rotation[,2], type='p', cex=0.5, pch=20,main="Loadings Plot", xlab="PC1", ylab="PC2")
+abline(h=0, v=0, col="red")
+
+# Extract PCA results into data frames
+scree.data <- as.data.frame(results$importance)
+score.data <- as.data.frame(results$x)
+loadings.data <- as.data.frame(results$rotation)
+
+plot(loadings.data$PC1, loadings.data$PC2)
+abline(v=0.09, col="red")
+abline(v=-0.09, col="red")
+abline(h=0.09, col="red")
+abline(h=-0.09, col="red")
+
+# Make a new data frame with PC1, PC2, and PC3 loadings
+loadings.PC1.PC2 <- loadings.data[,1:3]
+loadings.PC1.PC2[1:6,1:3]  # look at the first few rows
+
+# subset significant loadings
+loadings.sig <- subset(loadings.PC1.PC2,
+                       PC1 > 0.09 | PC1 < -0.09 |
+                         PC2 > 0.09 | PC2 < -0.09)
+
+# sanity check - plot the results
+plot(loadings.sig$PC1, loadings.sig$PC2)
+text(loadings.sig$PC1, loadings.sig$PC2, labels = rownames(loadings.sig), pos = 3)
+rownames(loadings.sig)
+#[1] "4"   "6"   "9"   "11"  "13"  "15"  "19"  "24"  "40"  "41"  "55"  "267" "295" "317" "320" "325" "326" "328" "329" "330" "333" "336" "337" "338"
+#[25] "339" "341" "343" "344" "347" "348" "349" "350" "352" "353" "354" "355"
+####################################################
+# Heatmaps
+####################################################
+library(gplots)
+heatmap.2(as.matrix(logdata.pareto))
+
+##11-O-Pt, Po-5a,3a,P5D show a similar pattern (red = low (-4) -orange -0 - yellow 4)for all patients except for 328,350,356
+#A5T-16a (orange), a-OH-DHEA (red) but similar patterns, same patients affected 
+#THB. THA same pattern 
+#Et, An only 2 patients almost (red-orange) but not a distinct pattern 
+#DHEA shows two distinct pattern (middle) , up
+#Po-5b-3a (yellow) only up
+#THE
+
+####################################################
+# Boxplots
+####################################################
+
+colnames(logdata.pareto)
+boxplot(logdata.pareto$`16a-OH-DHEA`)
+dat3<-t(logdata.pareto)
+rownames(dat3)
+colnames(dat3)
+#NULL -> 
+colnames(dat3) <- rownames(logdata.pareto)
+nrow(dat3)
+boxplot(dat3)
+
+# Define the sample groups based on provided information
+samples_group1 <- c(4,6,9,11,13,15,19,24,40,41,55) #11
+samples_group2 <- c(267, 295, 317, 320, 325, 326, 328, 329, 330, 333, 336, 337, 338,  #23
+                    339, 341, 343, 344, 347, 348, 349, 350, 354, 355)  # Group 2: Samples 267-355 (except 352 and 353) #2
+samples_group3 <- c(352, 353)  # Group 3: Samples 352 and 353
+
+Group <- c(rep("Group 1", length(samples_group1)),    # Assigning Group 1 label to samples in samples_group1
+           rep("Group 2", length(samples_group2)),    # Assigning Group 2 label to samples in samples_group2
+           rep("Group 3", length(samples_group3))) 
+##################
+######################incomplete#############################
+####################################################
+# Volcano plots
+####################################################
+# was ist apply?
+apply(dat3,1,sum)
+apply(dat3,1,function (x) mean(x)/sd(x))
+# Wie liegen die Daten vor?
+dat3[4:18,1]
+Group
+Group[4:18]
+
+# t-test für die erste Spalte und die drei Gruppen
+boxplot(dat3[4:18, 1] ~ Group[4:18])
+test <- t.test(dat3[4:18, 1] ~ Group[4:18])
+test
+# Ergebnis in ein Objekt schreiben
+# Auf das Ergebnis zugreifen
+names(test)
+test$p.value
+test$estimate
+test$estimate[1]
+test$estimate[2]
+test$estimate[1]-test$estimate[2]
+# Fold change
+test$estimate[1]/test$estimate[2]
+# log2 Fold change
+-log2(abs(test$estimate[1]/test$estimate[2]))
+
+######################################################
+# Für alle Metabolite
+######################################################
+
+# Sum normalization function - apply to each column
+sumnorm <- function(z) {
+  colsum <- apply(z, 2, sum)
+  rv <- sweep(z, 2, colsum, "/")
+  return(rv)
+}
+
+# Sum normalize data
+set1.norm <- sumnorm(dta2)
+# Log transform data
+logd1.norm = log2(set1.norm)
+# Perform t-test to get p-values 
+pvalue <- apply(logd1.norm, 1, function(x) { t.test(x[1:8], x[9:18])$p.value } )
+# Apply Benjamini-Hochberg correction (FDR)
+p.BHcorr <- p.adjust(pvalue, method = "BH")
+# Calculate negative log of FDR-adjusted p value
+p.BH.nlog <- -log10(p.BHcorr)
+# Calculate row-wise group means for sum normalized data
+hp <- apply(set1.norm[1:8], 1, FUN=mean)
+Man <- apply(set1.norm[9:18], 1, FUN=mean)
+# Calculate log2 Fold Change from group means
+FC <- hp/Man
+log2FC <- log(FC,2)
+# Make new data frame with volcano plot data
+volcano.dat1 <- data.frame(hp, Man, pvalue, p.BHcorr, p.BH.nlog, FC, log2FC)
+
+# Sort in ascending order by FDR
+volcano.dat1 <- volcano.dat1[order(p.BHcorr),]
+
+# make a simple volcano plot
+plot(volcano.dat1$log2FC, volcano.dat1$p.BH.nlog)
+
+# add cutoff lines to show significant variables
+abline(v=2, col="red")
+abline(v=-2, col="red")
+abline(h=2, col="red")
+# Add sample numbers as text labels
+text(volcano.dat1$log2FC, volcano.dat1$p.BH.nlog, labels = rownames(volcano.dat1), pos = 3)
+```
+

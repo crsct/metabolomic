@@ -71,7 +71,7 @@
           '';
           installPhase = ''
             mkdir -p $out
-            cp src/project.html $out
+            cp src/danya.html $out
           '';
         };
       };
