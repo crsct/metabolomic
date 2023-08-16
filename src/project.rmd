@@ -58,7 +58,7 @@ boxplot(logdata.pareto)
 ## Principal Component analysis
 
 ```{r}
-pca <- prcomp(t(logdata.pareto), center=F, scale=F)
+pca <- prcomp(logdata.pareto, center=F, scale=F)
 
 # Display
 
@@ -88,7 +88,7 @@ score.data <- as.data.frame(results$x)
 loadings.data <- as.data.frame(results$rotation)
 
 plot(loadings.data$PC1, loadings.data$PC2)
-pvalue <- 0.05
+pvalue <- 0.09
 abline(v=pvalue, col="red")
 abline(v=-pvalue, col="red")
 abline(h=pvalue, col="red")
@@ -122,19 +122,19 @@ heatmap.2(as.matrix(logdata.pareto), cexRow=0.5, cexCol=0.5 )
 ## Clustering
 
 ```{r}
-# library(factoextra)
+library(factoextra)
 library(cluster)
 library(ggplot2)
 
-gap_stat <- clusGap(logdata.pareto,
+gap_stat <- clusGap(t(logdata.pareto),
                     FUN = kmeans,
                     K.max = 5)
 
-# fviz_gap_stat(gap_stat)
+fviz_gap_stat(gap_stat)
 
-result <- (clara(logdata.pareto, 3))
+result <- (clara(logdata.pareto, 5))
 
-# fviz_cluster(result, data = logdata.pareto)
+fviz_cluster(result, data = logdata.pareto)
 
 ```
 
@@ -154,19 +154,38 @@ for (cluster in unique(clustered_data$cluster)) {
 ```
 
 ```{r}
+
 median_cluster <- list()
 for (cluster in unique(clustered_data$cluster)) {
   median_cluster[[cluster]] <- apply(clustered_data[clustered_data$cluster == cluster, ], 2, median)
 } 
 ```
 
+```{r}
+line_colors <- c("blue", "red", "green")
+new_color <- function(x) {
+  return(line_colors[[(x %% length(line_colors))+1]])
+}
+```
+
+```{r}
+plot(unlist(median_cluster[[1]][1:30]), 
+    type = "l", xlab = "metabolites", ylab = "concentration",
+    ylim=c(-1, 1),
+    main = "Median Cluster", xaxt = "n", col=new_color(1))
+
+axis(1, at = 1:30, labels=rownames(as.data.frame(median_cluster[[1]][1:30])))
+
+for (cluster in 2:length(median_cluster)) {
+  lines(unlist(median_cluster[[cluster]][1:30]), col=new_color(cluster))
+}
+
+legend("topright", legend = 1:length(median_cluster), col = line_colors, lwd = 2)
+```
+
 ## Add Ratios
 ```{r}
 ratios <- function(y) {
-  # return(apply(y, 1, \(x) {return((x["An"] + x["Et"]) / (x["a.THF"] + x["THF"] + x["THE"]))}))
-  # c19 <- x["DHEA"] + x["X16a.OH.DHEA"] + x["A5t.16a"]
-  # c21 <- x["a.THF"] + x["THF"] + x["THE"]
-
   df <- data.frame(matrix(nrow = 357, ncol =0))
 
   df$relative_overall_androgen_production_1 <- apply(y, 1, \(x) {return((x["An"] + x["Et"]) / (x["a.THF"] + x["THF"] + x["THE"]))})
@@ -197,7 +216,31 @@ ratios <- function(y) {
   return(df)
 }
 ```
-# (An + Et + A5-3β,17α + A5-3β,17β + DHEA + 16α-OH-DHEA + A5T-16α) / (5α-THF + THF + THE)
-# Relative adrenal androgen production:
-# DHEA / (5α-THF + THF + THE)
-# (DHEA + 16α-OH-DHEA + A5T-16α) / (5α -THF + THF + THE)
+
+```{r}
+combined_df <- cbind(clustered_data, ratios(clustered_data))
+
+heatmap(as.matrix(combined_df[,33:50]))
+```
+
+```{r}
+median_cluster <- list()
+for (cluster in unique(combined_df$cluster)) {
+  median_cluster[[cluster]] <- apply(combined_df[combined_df$cluster == cluster, ], 2, median)
+} 
+```
+
+```{r}
+plot(unlist(median_cluster[[1]][33:50]), 
+    type = "l", xlab = "metabolites", ylab = "concentration",
+    ylim=c(-1, 1),
+    main = "Median Ratios For Clusters", xaxt = "n", col=new_color(1))
+
+axis(1, at = 33:50, labels=rownames(as.data.frame(median_cluster[[1]][33:50])))
+
+for (cluster in 2:length(median_cluster)) {
+  lines(unlist(median_cluster[[cluster]][33:50]), col=new_color(cluster))
+}
+
+legend("topright", legend = 1:length(median_cluster), col = line_colors, lwd = 2)
+```
