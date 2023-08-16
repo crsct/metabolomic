@@ -9,7 +9,7 @@ title: metabolomic - paper
 ```{r}
 library(readxl)
 data <- read_excel(
-    "Input/Datenbank_Steroide_gruppiert_230421.xlsx",
+    "../Input/Datenbank_Steroide_gruppiert_230421.xlsx",
     skip = 1, sheet = "Steroids", col_names = TRUE)
 ```
 
@@ -148,35 +148,56 @@ clustered_data <- as.data.frame(logdata.pareto) %>% add_column(cluster = result$
 ```
 
 ```{r}
-boxplot(clustered_data[clustered_data$cluster == 2,])
-```
-
-```{r}
-library(gridExtra)
-plot_list <- list()
-
 for (cluster in unique(clustered_data$cluster)) {
-  plot_list[[cluster]] <- boxplot(clustered_data[clustered_data$cluster == cluster,], main=cluster)
-  plot
+  boxplot(clustered_data[clustered_data$cluster == cluster,], main=cluster)
 }
-plot_grob <- arrangeGrob(grobs=plot_list)
-grid.arrange(plot_grob)
-# plot_grob
 ```
-
 
 ```{r}
-plot(rep(10,30), rep(10,30), type="l", xlab="Metabolite", ylab="Concentration", main="Cluster 1")
-
+median_cluster <- list()
+for (cluster in unique(clustered_data$cluster)) {
+  median_cluster[[cluster]] <- apply(clustered_data[clustered_data$cluster == cluster, ], 2, median)
+} 
 ```
+
+## Add Ratios
 ```{r}
+ratios <- function(y) {
+  # return(apply(y, 1, \(x) {return((x["An"] + x["Et"]) / (x["a.THF"] + x["THF"] + x["THE"]))}))
+  # c19 <- x["DHEA"] + x["X16a.OH.DHEA"] + x["A5t.16a"]
+  # c21 <- x["a.THF"] + x["THF"] + x["THE"]
 
-library(ggplot2)
+  df <- data.frame(matrix(nrow = 357, ncol =0))
 
-x <- data.frame('One' = c(0, 4, 17), 'Two' = c(10, 20, 39), 'Three' = c(19, 3, 3))
-# x <- melt(x)
+  df$relative_overall_androgen_production_1 <- apply(y, 1, \(x) {return((x["An"] + x["Et"]) / (x["a.THF"] + x["THF"] + x["THE"]))})
+  df$relative_overall_androgen_production_2 <- apply(y, 1, \(x) {return((x["An"] + x["Et"] + x["A5.3b.17a"] + x["A5.3b.17b"] + x["DHEA"] + x["X16a.OH.DHEA"] + x["A5T.16a"]) / (x["a.THF"] + x["THF"] + x["THE"]))})
+  
+  df$relative_adrenal_androgen_production_1 <- apply(y, 1, \(x) {return((x["DHEA"]) / (x["a.THF"] + x["THF"] + x["THE"]))})
+  df$relative_adrenal_androgen_production_2 <- apply(y, 1, \(x) {return((x["DHEA"] + x["X16a.OH.DHEA"] + x["A5T.16a"])/(x["a.THF"] + x["THF"] + x["THE"]))})
+  
+  df$relative_overproduction_of_3bHSD_1 <- apply(y, 1, \(x) {return(x["DHEA"] / (x["An"] + x["Et"]))})
+  df$relative_overproduction_of_3bHSD_2 <- apply(y, 1, \(x) {return((x["DHEA"] + x["X16a.OH.DHEA"] + x["A5T.16a"]) / (x["An"] + x["Et"]))})
+  df$relative_overproduction_of_3bHSD_3 <- apply(y, 1, \(x) {return((x["DHEA"] + x["X16a.OH.DHEA"] + x["A5T.16a"]) / (x["a.THF"] + x["THE"] + x["THF"]))})
+  df$relative_overproduction_of_3bHSD_4 <- apply(y, 1, \(x) {return(x["P5T.17a"] / (x["a.THF"] + x["THF"] + x["THE"]))})
+  df$relative_overproduction_of_3bHSD_5 <- apply(y, 1, \(x) {return(x["P5T.17a"] / x["PT"])})
 
-plt <- ggplot(data = x, aes(x = 1, y = 2))
-plt + geom_boxplot() + theme_minimal() + labs(x = "Title", y = "x")
+  df$X21_hydroxylase_activity_1 <- apply(y, 1, \(x) {return((x["PT"] + x["Po.5b.3a"] + x["Po.5a.3a"]) / (x["a.THF"] + x["THF"] + x["THE"]))})
+  df$X21_hydroxylase_activity_2 <- apply(y, 1, \(x) {return((x["X11.O.Pt"] + x["PT"] + x["Po.5b.3a"] + x["Po.5a.3a"]) / (x["a.THF"] + x["THF"] + x["THE"]))})
+  df$X21_hydroxylase_activity_3 <- apply(y, 1, \(x) {return((x["X11.O.Pt"]) / (x["a.THF"] + x["THF"] + x["THE"]))})
+  df$X21_hydroxylase_activity_4 <- apply(y, 1, \(x) {return(x["X11.O.Pt"] / x["a.Cl"])})
 
+  df$X11b_hydroxylase_activity_1 <- apply(y, 1, \(x) {return(x["THS"] / (x["a.THF"] + x["THF"] + x["THE"]))})
+  df$X11b_hydroxylase_activity_2 <- apply(y, 1, \(x) {return((x["An"] + x["Et"]) / (x["X11.OH.An"] + x["X11.OH.Et"]))})
+
+  df$X17_hydroxylase_activity_global <- apply(y, 1, \(x) {return((x["THA"] + x["THB"] + x["a.THB"]) / (x["An"] + x["Et"]))})
+  df$X17_hydroxylase_activity_17a_hydroxylase_activity_d5 <- apply(y, 1, \(x) {return(x["P5D"] / x["P5T.17a"])})
+  df$X17_hydroxylase_activity_17a_hydroxylase_activity_d4 <- apply(y, 1, \(x) {return(x["PD"] / x["PT"])})
+  df$X17_hydroxylase_activity_17a_hydroxylase_activity_global <- apply(y, 1, \(x) {return((x["a.THF"] + x["THF"] + x["THE"]) / (x["An"] + x["Et"]))})
+
+  return(df)
+}
 ```
+# (An + Et + A5-3β,17α + A5-3β,17β + DHEA + 16α-OH-DHEA + A5T-16α) / (5α-THF + THF + THE)
+# Relative adrenal androgen production:
+# DHEA / (5α-THF + THF + THE)
+# (DHEA + 16α-OH-DHEA + A5T-16α) / (5α -THF + THF + THE)
