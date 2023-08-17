@@ -10,7 +10,7 @@ Since the data is in an `excel sheet` we will ned the library `readxl` to gather
 ```{r}
 library(readxl)
 data <- read_excel(
-  "../Input/Datenbank_Steroide_gruppiert_230421.xlsx",
+  "../Datenbank_Steroide_gruppiert_230421.xlsx",
   skip = 1, sheet = "Steroids", col_names = TRUE
 )
 ```
@@ -64,7 +64,9 @@ paretoscale <- function(z) {
 # Pareto scale log transformed data
 logdata.pareto <- scale(paretoscale(logdata))
 
-boxplot(logdata.pareto)
+boxplot(dat2, pars = list(las=2))
+boxplot(logdata, pars = list(las=2))
+boxplot(logdata.pareto, pars = list(las=2))
 ```
 
 ## Principal Component Analysis
@@ -110,6 +112,8 @@ score.data <- as.data.frame(results$x)
 loadings.data <- as.data.frame(results$rotation)
 
 plot(loadings.data$PC1, loadings.data$PC2)
+text(loadings.data$PC1, loadings.data$PC2, rownames(loadings.data), pos = 3)
+
 pvalue <- 0.09
 abline(v = pvalue, col = "red")
 abline(v = -pvalue, col = "red")
@@ -129,6 +133,7 @@ loadings.sig <- subset(
 
 # sanity check - plot the results
 plot(loadings.sig$PC1, loadings.sig$PC2)
+text(loadings.sig$PC1, loadings.sig$PC2, rownames(loadings.sig), pos = 3)
 ```
 
 
@@ -303,7 +308,7 @@ combined_df <- cbind(clustered_data, ratios(dat2))
 combined_df <- cbind(combined_df, sums(dat2))
 ```
 
-## Cluster based Plotting
+## Cluster based Plotting with 3 Clusters
 
 ### Boxplot per Cluster
 
@@ -326,7 +331,7 @@ for (cluster in unique(clustered_data$cluster)) {
 
 ```{r}
 # Little helper function to create multiple colors in a plot, could probably benefit from a few more
-line_colors <- c("blue", "red", "green")
+line_colors <- c("blue", "red", "green", "violet", "black")
 new_color <- function(x) {
   return(line_colors[[(x %% length(line_colors)) + 1]])
 }
@@ -367,7 +372,7 @@ heatmap(as.matrix(combined_df[, 33:51]))
 ```{r}
 median_cluster <- list()
 for (cluster in unique(combined_df$cluster)) {
-  median_cluster[[cluster]] <- apply(combined_df[combined_df$cluster == cluster, ], 2, median)
+  median_cluster[[cluster]] <- apply(combined_df[combined_df$cluster == cluster,], 2, median)
 }
 ```
 
@@ -375,7 +380,127 @@ for (cluster in unique(combined_df$cluster)) {
 
 plot(unlist(median_cluster[[1]][33:51]),
   type = "l", xlab = "metabolites", ylab = "concentration",
-  ylim = c(-20, 20),
+  ylim = c(-2, 2),
+  main = "Median Ratios For Clusters", xaxt = "n", col = new_color(1)
+)
+
+axis(1, at = 33:51, labels = rownames(as.data.frame(median_cluster[[1]][33:51])))
+
+for (cluster in 2:length(median_cluster)) {
+  lines(unlist(median_cluster[[cluster]][33:51]), col = new_color(cluster))
+}
+
+legend("topright", legend = 1:length(median_cluster), col = line_colors, lwd = 2)
+```
+
+### Heatmap for each ratio based on the clusters
+```{r, echo=FALSE}
+
+library(pheatmap)
+selected_columns_list <- lapply(median_cluster, function(entry) entry[33:51])
+par(mar = c(1, 1, 2, 10))
+
+heatmap(t(scale(do.call(rbind, selected_columns_list), center=F, scale=T)))
+```
+
+```{r, echo=FALSE}
+
+library(pheatmap)
+selected_columns_list <- lapply(median_cluster, function(entry) entry[51:55])
+par(mar = c(4, 2, 2, 2))
+pheatmap(t(scale(do.call(rbind, selected_columns_list), center=F, scale=T)), height=2)
+```
+
+
+```{r, echo=FALSE}
+
+par(las = 2)
+par(mar = c(14, 3, 2, 2))
+for (cluster in seq_along(unique(combined_df$cluster))) {
+  boxplot(scale(combined_df[combined_df$cluster == cluster, 33:51]), height=1)
+}
+par(las=0)
+```
+
+
+```{r}
+result <- (clara(logdata.pareto, 5))
+
+# Plot the calculated cluster
+fviz_cluster(result, data = logdata.pareto)
+
+clustered_data <- as.data.frame(logdata.pareto) %>% add_column(cluster = result$clustering)
+
+combined_df <- cbind(clustered_data, ratios(dat2))
+combined_df <- cbind(combined_df, sums(dat2))
+```
+
+## Cluster based Plotting
+
+### Boxplot per Cluster with 5 Cluster
+
+Firstly we plot a boxplot for each cluster.
+
+```{r, echo=FALSE}
+par(las=2)
+for (cluster in unique(clustered_data$cluster)) {
+  boxplot(clustered_data[clustered_data$cluster == cluster, ], main = cluster)
+}
+```
+
+### Line of median metabolite for each cluster
+
+```{r}
+median_cluster <- list()
+for (cluster in unique(clustered_data$cluster)) {
+  median_cluster[[cluster]] <- apply(clustered_data[clustered_data$cluster == cluster, ], 2, median)
+}
+```
+
+```{r, echo=FALSE}
+plot(unlist(median_cluster[[1]][1:30]),
+  type = "l", xlab = "metabolites", ylab = "concentration",
+  ylim = c(-1.5, 1.5),
+  main = "Median Cluster", xaxt = "n", col = new_color(1)
+)
+
+axis(1, at = 1:30, labels = rownames(as.data.frame(median_cluster[[1]][1:30])))
+
+for (cluster in 2:length(median_cluster)) {
+  lines(unlist(median_cluster[[cluster]][1:30]), col = new_color(cluster))
+}
+
+legend("topright", legend = 1:length(median_cluster), col = line_colors, lwd = 2)
+```
+
+### Boxplot for each cluster for the sums
+
+```{r, echo=FALSE}
+for(cluster in unique(combined_df$cluster)) {
+  boxplot(scale(combined_df[combined_df$cluster == cluster, 52:55], center=F, scale=T), main=paste('Cluster', cluster, 'Sums', sep=' '))
+}
+```
+
+### Heatmap for the Ratios
+
+```{r, echo=FALSE}
+heatmap(as.matrix(combined_df[, 33:51]))
+```
+
+### Metabolite Concentration per Cluster
+
+```{r}
+median_cluster <- list()
+for (cluster in unique(combined_df$cluster)) {
+  median_cluster[[cluster]] <- apply(combined_df[combined_df$cluster == cluster,], 2, median)
+}
+```
+
+```{r, echo=FALSE}
+
+plot(unlist(median_cluster[[1]][33:51]),
+  type = "l", xlab = "metabolites", ylab = "concentration",
+  ylim = c(-0, 2.5),
   main = "Median Ratios For Clusters", xaxt = "n", col = new_color(1)
 )
 
@@ -394,7 +519,15 @@ legend("topright", legend = 1:length(median_cluster), col = line_colors, lwd = 2
 library(pheatmap)
 selected_columns_list <- lapply(median_cluster, function(entry) entry[33:51])
 par(mar = c(4, 2, 2, 2))
-pheatmap(t(do.call(rbind, selected_columns_list)), height=2)
+pheatmap(t(scale(do.call(rbind, selected_columns_list), center=F, scale=T)), height=2)
+```
+
+```{r, echo=FALSE}
+
+library(pheatmap)
+selected_columns_list <- lapply(median_cluster, function(entry) entry[51:55])
+par(mar = c(4, 2, 2, 2))
+pheatmap(t(scale(do.call(rbind, selected_columns_list), center=F, scale=T)), height=2)
 ```
 
 ```{r, echo=FALSE}
