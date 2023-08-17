@@ -10,4 +10,15 @@ This project is powered by [Nix](https://nixos.org) making it incredibly easy to
 
 ### Dependencies
 
+#### R packages
+
+* ggplot2
+* tidyverse
+* tikzDevice
+* gplots
+* FactoMineR
+* ggfortify
+* cluster
 * readxl
+* factoextra
+* pheatmap
