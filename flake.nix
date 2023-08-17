@@ -10,21 +10,6 @@
     with flake-utils.lib; eachSystem allSystems (system:
     let
       pkgs = nixpkgs.legacyPackages.${system};
-      # tex = pkgs.texlive.combine {
-      #   inherit (pkgs.texlive)
-      #   scheme-basic
-      #   latex-bin
-      #   latexmk
-
-      #   # Add tex packages below
-      #   caption
-      #   cleveref
-      #   courier
-      #   ec
-      #   enumitem
-      #   environ
-      #   xstring;
-      # };
     in rec {
       packages = {
         document = pkgs.stdenvNoCC.mkDerivation rec {
@@ -36,15 +21,7 @@
             pkgs.coreutils
             pkgs.gnumake
             pkgs.gnused
-            pkgs.graphviz-nox
-            pkgs.dot2tex
-            pkgs.haskellPackages.pandoc-crossref
-            pkgs.inkscape
             pkgs.pandoc
-            pkgs.pandoc-fignos
-            pkgs.python3
-            pkgs.python310Packages.numpy
-            pkgs.python310Packages.matplotlib
             pkgs.R
             pkgs.rPackages.ggplot2
             pkgs.rPackages.tidyverse
@@ -55,7 +32,6 @@
             pkgs.rPackages.cluster
             pkgs.rPackages.readxl
             pkgs.rPackages.pheatmap
-            # tex
           ];
           phases = ["unpackPhase" "buildPhase" "installPhase"];
           buildPhase = ''
@@ -66,7 +42,6 @@
             mkdir -p .cache/texmf-var
             mkdir -p .config/inkscape
             env TEXMFHOME=.cache TEXMFVAR=.cache/texmf-var \
-              # make project.pdf
               Rscript src/script.R
           '';
           installPhase = ''
