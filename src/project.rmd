@@ -316,7 +316,7 @@ Firstly we plot a boxplot for each cluster.
 
 ```{r, echo=FALSE}
 for (cluster in unique(clustered_data$cluster)) {
-  boxplot(clustered_data[clustered_data$cluster == cluster, ], main = cluster)
+  boxplot(clustered_data[clustered_data$cluster == cluster, ], pars=list(las=2), main = cluster)
 }
 ```
 
@@ -357,7 +357,7 @@ legend("topright", legend = 1:length(median_cluster), col = line_colors, lwd = 2
 
 ```{r, echo=FALSE}
 for(cluster in unique(combined_df$cluster)) {
-  boxplot(scale(combined_df[combined_df$cluster == cluster, 52:55], center=F, scale=T), main=paste('Cluster', cluster, 'Sums', sep=' '))
+  boxplot(scale(combined_df[combined_df$cluster == cluster, 52:55], center=F, scale=T), pars=list(las=2), main=paste('Cluster', cluster, 'Sums', sep=' '))
 }
 ```
 
@@ -380,7 +380,7 @@ for (cluster in unique(combined_df$cluster)) {
 
 plot(unlist(median_cluster[[1]][33:51]),
   type = "l", xlab = "metabolites", ylab = "concentration",
-  ylim = c(-2, 2),
+  ylim = c(0, 3),
   main = "Median Ratios For Clusters", xaxt = "n", col = new_color(1)
 )
 
@@ -408,7 +408,7 @@ heatmap(t(scale(do.call(rbind, selected_columns_list), center=F, scale=T)))
 library(pheatmap)
 selected_columns_list <- lapply(median_cluster, function(entry) entry[51:55])
 par(mar = c(4, 2, 2, 2))
-pheatmap(t(scale(do.call(rbind, selected_columns_list), center=F, scale=T)), height=2)
+heatmap(t(scale(do.call(rbind, selected_columns_list), center=F, scale=T)))
 ```
 
 
@@ -417,7 +417,7 @@ pheatmap(t(scale(do.call(rbind, selected_columns_list), center=F, scale=T)), hei
 par(las = 2)
 par(mar = c(14, 3, 2, 2))
 for (cluster in seq_along(unique(combined_df$cluster))) {
-  boxplot(scale(combined_df[combined_df$cluster == cluster, 33:51]), height=1)
+  boxplot(scale(combined_df[combined_df$cluster == cluster, 33:51]))
 }
 par(las=0)
 ```
@@ -444,7 +444,7 @@ Firstly we plot a boxplot for each cluster.
 ```{r, echo=FALSE}
 par(las=2)
 for (cluster in unique(clustered_data$cluster)) {
-  boxplot(clustered_data[clustered_data$cluster == cluster, ], main = cluster)
+  boxplot(clustered_data[clustered_data$cluster == cluster, ], pars=list(las=2), main = cluster)
 }
 ```
 
@@ -460,7 +460,7 @@ for (cluster in unique(clustered_data$cluster)) {
 ```{r, echo=FALSE}
 plot(unlist(median_cluster[[1]][1:30]),
   type = "l", xlab = "metabolites", ylab = "concentration",
-  ylim = c(-1.5, 1.5),
+  ylim = c(-2.5, 2),
   main = "Median Cluster", xaxt = "n", col = new_color(1)
 )
 
@@ -477,7 +477,7 @@ legend("topright", legend = 1:length(median_cluster), col = line_colors, lwd = 2
 
 ```{r, echo=FALSE}
 for(cluster in unique(combined_df$cluster)) {
-  boxplot(scale(combined_df[combined_df$cluster == cluster, 52:55], center=F, scale=T), main=paste('Cluster', cluster, 'Sums', sep=' '))
+  boxplot(scale(combined_df[combined_df$cluster == cluster, 52:55], center=F, scale=T),pars=list(las=2), main=paste('Cluster', cluster, 'Sums', sep=' '))
 }
 ```
 
@@ -500,7 +500,7 @@ for (cluster in unique(combined_df$cluster)) {
 
 plot(unlist(median_cluster[[1]][33:51]),
   type = "l", xlab = "metabolites", ylab = "concentration",
-  ylim = c(-0, 2.5),
+  ylim = c(0, 2.5),
   main = "Median Ratios For Clusters", xaxt = "n", col = new_color(1)
 )
 
@@ -519,7 +519,7 @@ legend("topright", legend = 1:length(median_cluster), col = line_colors, lwd = 2
 library(pheatmap)
 selected_columns_list <- lapply(median_cluster, function(entry) entry[33:51])
 par(mar = c(4, 2, 2, 2))
-pheatmap(t(scale(do.call(rbind, selected_columns_list), center=F, scale=T)), height=2)
+heatmap(t(scale(do.call(rbind, selected_columns_list), center=F, scale=T)))
 ```
 
 ```{r, echo=FALSE}
@@ -527,7 +527,7 @@ pheatmap(t(scale(do.call(rbind, selected_columns_list), center=F, scale=T)), hei
 library(pheatmap)
 selected_columns_list <- lapply(median_cluster, function(entry) entry[51:55])
 par(mar = c(4, 2, 2, 2))
-pheatmap(t(scale(do.call(rbind, selected_columns_list), center=F, scale=T)), height=2)
+heatmap(t(scale(do.call(rbind, selected_columns_list), center=F, scale=T)))
 ```
 
 ```{r, echo=FALSE}
@@ -535,7 +535,7 @@ pheatmap(t(scale(do.call(rbind, selected_columns_list), center=F, scale=T)), hei
 par(las = 2)
 par(mar = c(14, 3, 2, 2))
 for (cluster in seq_along(unique(combined_df$cluster))) {
-  boxplot(scale(combined_df[combined_df$cluster == cluster, 33:51]), height=1)
+  boxplot(scale(combined_df[combined_df$cluster == cluster, 33:51]))
 }
 par(las=0)
 ```
