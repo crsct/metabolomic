@@ -316,7 +316,7 @@ Firstly we plot a boxplot for each cluster.
 
 ```{r, echo=FALSE}
 for (cluster in unique(clustered_data$cluster)) {
-  boxplot(clustered_data[clustered_data$cluster == cluster, ], pars=list(las=2), main = cluster)
+  boxplot(clustered_data[clustered_data$cluster == cluster, 1:31], pars=list(las=2), main = cluster)
 }
 ```
 
@@ -417,7 +417,7 @@ heatmap(t(scale(do.call(rbind, selected_columns_list), center=F, scale=T)))
 par(las = 2)
 par(mar = c(14, 3, 2, 2))
 for (cluster in seq_along(unique(combined_df$cluster))) {
-  boxplot(scale(combined_df[combined_df$cluster == cluster, 33:51]))
+  boxplot(scale(combined_df[combined_df$cluster == cluster, 33:51]), main=paste("Boxplots of Cluster", cluster, "Ratios", sep=" "))
 }
 par(las=0)
 ```
@@ -444,7 +444,7 @@ Firstly we plot a boxplot for each cluster.
 ```{r, echo=FALSE}
 par(las=2)
 for (cluster in unique(clustered_data$cluster)) {
-  boxplot(clustered_data[clustered_data$cluster == cluster, ], pars=list(las=2), main = cluster)
+  boxplot(clustered_data[clustered_data$cluster == cluster, 1:31], pars=list(las=2), main = cluster)
 }
 ```
 
@@ -535,7 +535,7 @@ heatmap(t(scale(do.call(rbind, selected_columns_list), center=F, scale=T)))
 par(las = 2)
 par(mar = c(14, 3, 2, 2))
 for (cluster in seq_along(unique(combined_df$cluster))) {
-  boxplot(scale(combined_df[combined_df$cluster == cluster, 33:51]))
+  boxplot(scale(combined_df[combined_df$cluster == cluster, 33:51]), main=paste("Boxplots of Cluster", cluster, "Ratios", sep=" "))
 }
 par(las=0)
 ```
