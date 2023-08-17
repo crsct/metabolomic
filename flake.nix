@@ -32,6 +32,7 @@
             pkgs.rPackages.cluster
             pkgs.rPackages.readxl
             pkgs.rPackages.pheatmap
+            pkgs.rPackages.factoextra
           ];
           phases = ["unpackPhase" "buildPhase" "installPhase"];
           buildPhase = ''
